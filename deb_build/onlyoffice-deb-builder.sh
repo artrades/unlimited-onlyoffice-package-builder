@@ -1,22 +1,20 @@
 #!/bin/bash
 
 #######################################################################
-# OnlyOffice Deb Builder
+# Сборщик Deb пакетов OnlyOffice
 
 # Copyright (C) 2024 BTACTIC, SCCL
 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Эта программа является свободным программным обеспечением: вы можете распространять и/или модифицировать
+# её на условиях Стандартной общественной лицензии GNU в том виде, в каком она была опубликована Фондом свободного программного обеспечения;
+# либо версии 3 лицензии, либо (по вашему выбору) любой более поздней версии.
 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# Эта программа распространяется в надежде, что она будет полезной,
+# но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; даже без подразумеваемой гарантии ТОВАРНОГО ВИДА
+# или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной общественной лицензии GNU.
 
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Вы должны были получить копию Стандартной общественной лицензии GNU
+# вместе с этой программой. Если это не так, см. <http://www.gnu.org/licenses/>.
 #######################################################################
 
 usage() {
@@ -24,17 +22,17 @@ cat <<EOF
 
   $0
   Copyright BTACTIC, SCCL
-  Licensed under the GNU PUBLIC LICENSE 3.0
+  Лицензировано под GNU PUBLIC LICENSE 3.0
 
-  Usage: $0 --product-version=PRODUCT_VERSION --build-number=BUILD_NUMBER --unlimited-organization=ORGANIZATION --tag-suffix=-TAG_SUFFIX --debian-package-suffix=-DEBIAN_PACKAGE_SUFFIX
-  Example: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic
+  Использование: $0 --product-version=ВЕРСИЯ_ПРОДУКТА --build-number=НОМЕР_СБОРКИ --unlimited-organization=ОРГАНИЗАЦИЯ --tag-suffix=СУФФИКС_ТЕГА --debian-package-suffix=СУФФИКС_DEBIAN_ПАКЕТА
+  Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic
 
 EOF
 
 }
 
 
-# Check the arguments.
+# Проверить аргументы.
 for option in "$@"; do
   case "$option" in
     -h | --help)
@@ -60,10 +58,11 @@ for option in "$@"; do
 done
 
 
+# Проверить обязательные параметры
 if [ "x${PRODUCT_VERSION}" == "x" ] ; then
     cat << EOF
-    --product-version option must be informed.
-    Aborting...
+    Необходимо указать опцию --product-version.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -71,8 +70,8 @@ fi
 
 if [ "x${BUILD_NUMBER}" == "x" ] ; then
     cat << EOF
-    --build-number option must be informed.
-    Aborting...
+    Необходимо указать опцию --build-number.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -80,8 +79,8 @@ fi
 
 if [ "x${UNLIMITED_ORGANIZATION}" == "x" ] ; then
     cat << EOF
-    --unlimited-organization option must be informed.
-    Aborting...
+    Необходимо указать опцию --unlimited-organization.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -89,8 +88,8 @@ fi
 
 if [ "x${TAG_SUFFIX}" == "x" ] ; then
     cat << EOF
-    --tag-suffix option must be informed.
-    Aborting...
+    Необходимо указать опцию --tag-suffix.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -98,8 +97,8 @@ fi
 
 if [ "x${DEBIAN_PACKAGE_SUFFIX}" == "x" ] ; then
     cat << EOF
-    --debian-package-suffix option must be informed.
-    Aborting...
+    Необходимо указать опцию --debian-package-suffix.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -118,13 +117,13 @@ build_deb() {
 
   _GIT_CLONE_BRANCH="v${_PRODUCT_VERSION}.${_BUILD_NUMBER}"
 
-  # TODO: These requirements should be moved to Dockerfile
+  # TODO: Эти требования должны быть перенесены в Dockerfile
   # apt install build-essential m4 npm
   # npm install -g pkg
 
   git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}
-  # Ignore DETACHED warnings
-  # Workaround for installing dependencies - BEGIN
+  # Игнорировать предупреждения DETACHED
+  # Обходной путь для установки зависимостей - НАЧАЛО
   cd ${DOCUMENT_SERVER_PACKAGE_PATH}
 
   cat << EOF >> Makefile
@@ -136,7 +135,7 @@ EOF
   PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb_dependencies
   cd ${DOCUMENT_SERVER_PACKAGE_PATH}/deb/build
   apt-get -qq build-dep -y ./
-  # Workaround for installing dependencies - END
+  # Обходной путь для установки зависимостей - КОНЕЦ
 
   cd ${DOCUMENT_SERVER_PACKAGE_PATH}
   PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb
