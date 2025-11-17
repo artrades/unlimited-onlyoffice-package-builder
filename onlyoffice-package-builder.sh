@@ -1,22 +1,20 @@
 #!/bin/bash
 
 #######################################################################
-# OnlyOffice Package Builder
+# Сборщик пакетов OnlyOffice
 
 # Copyright (C) 2024 BTACTIC, SCCL
 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Эта программа является свободным программным обеспечением: вы можете распространять и/или модифицировать
+# её на условиях Стандартной общественной лицензии GNU в том виде, в каком она была опубликована Фондом свободного программного обеспечения;
+# либо версии 3 лицензии, либо (по вашему выбору) любой более поздней версии.
 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# Эта программа распространяется в надежде, что она будет полезной,
+# но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; даже без подразумеваемой гарантии ТОВАРНОГО ВИДА
+# или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ. Подробнее см. в Стандартной общественной лицензии GNU.
 
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Вы должны были получить копию Стандартной общественной лицензии GNU
+# вместе с этой программой. Если это не так, см. <http://www.gnu.org/licenses/>.
 #######################################################################
 
 usage() {
@@ -24,14 +22,14 @@ cat <<EOF
 
   $0
   Copyright BTACTIC, SCCL
-  Licensed under the GNU PUBLIC LICENSE 3.0
+  Лицензировано под GNU PUBLIC LICENSE 3.0
 
-  Usage: $0 --product-version=PRODUCT_VERSION --build-number=BUILD_NUMBER --unlimited-organization=ORGANIZATION --tag-suffix=-TAG_SUFFIX --debian-package-suffix=-DEBIAN_PACKAGE_SUFFIX
-  Example: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic
+  Использование: $0 --product-version=ВЕРСИЯ_ПРОДУКТА --build-number=НОМЕР_СБОРКИ --unlimited-organization=ОРГАНИЗАЦИЯ --tag-suffix=СУФФИКС_ТЕГА --debian-package-suffix=СУФФИКС_DEBIAN_ПАКЕТА
+  Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic
 
-  For Github actions you might want to either build only binaries or build only deb so that it's easier to prune containers
-  Example: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --binaries-only
-  Example: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --deb-only
+  Для Github actions вы можете захотеть собрать только бинарные файлы или только deb пакет, чтобы было проще очищать контейнеры
+  Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --binaries-only
+  Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --deb-only
 
 EOF
 
@@ -45,7 +43,7 @@ UPSTREAM_ORGANIZATION="ONLYOFFICE"
 SERVER_CUSTOM_COMMITS="81db34dee17f8a6a364669232a8c7c2f5d36d81f"
 WEB_APPS_CUSTOM_COMMITS="140ef6d1d687532dcb03b05912838b8b4cf161a3"
 
-# Check the arguments.
+# Проверить аргументы.
 for option in "$@"; do
   case "$option" in
     -h | --help)
@@ -79,8 +77,9 @@ done
 BUILD_BINARIES="true"
 BUILD_DEB="true"
 
+# Проверить, запущен ли скрипт с правами root
 if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
+  then echo "Пожалуйста, запустите с правами root"
   exit 1
 fi
 
@@ -94,10 +93,11 @@ if [ ${DEB_ONLY} == "true" ] ; then
   BUILD_DEB="true"
 fi
 
+# Проверить обязательные параметры
 if [ "x${PRODUCT_VERSION}" == "x" ] ; then
     cat << EOF
-    --product-version option must be informed.
-    Aborting...
+    Необходимо указать опцию --product-version.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -105,8 +105,8 @@ fi
 
 if [ "x${BUILD_NUMBER}" == "x" ] ; then
     cat << EOF
-    --build-number option must be informed.
-    Aborting...
+    Необходимо указать опцию --build-number.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -114,8 +114,8 @@ fi
 
 if [ "x${UNLIMITED_ORGANIZATION}" == "x" ] ; then
     cat << EOF
-    --unlimited-organization option must be informed.
-    Aborting...
+    Необходимо указать опцию --unlimited-organization.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -123,8 +123,8 @@ fi
 
 if [ "x${TAG_SUFFIX}" == "x" ] ; then
     cat << EOF
-    --tag-suffix option must be informed.
-    Aborting...
+    Необходимо указать опцию --tag-suffix.
+    Прерывание...
 EOF
     usage
     exit 1
@@ -132,25 +132,26 @@ fi
 
 if [ "x${DEBIAN_PACKAGE_SUFFIX}" == "x" ] ; then
     cat << EOF
-    --debian-package-suffix option must be informed.
-    Aborting...
+    Необходимо указать опцию --debian-package-suffix.
+    Прерывание...
 EOF
     usage
     exit 1
 fi
 
+# Обработка опции очистки docker контейнеров
 PRUNE_DOCKER_CONTAINERS_ACTION="false"
 if [ "x${PRUNE_DOCKER_CONTAINERS}" != "x" ] ; then
   if [ ${PRUNE_DOCKER_CONTAINERS} == "true" ] -o [ ${PRUNE_DOCKER_CONTAINERS} == "TRUE" ] ; then
     PRUNE_DOCKER_CONTAINERS_ACTION="true"
     cat << EOF
-    WARNING !
-    WARNING !
-    --prune-docker-containers has been set to true
-    This will erase all of your docker containers
-    after the binaries build.
+    ВНИМАНИЕ !
+    ВНИМАНИЕ !
+    --prune-docker-containers установлен в true
+    Это приведет к удалению всех ваших docker контейнеров
+    после сборки бинарных файлов.
 
-    Waiting for 30s so that you can CTRL+C
+    Ожидание 30 секунд для возможности нажать CTRL+C
 EOF
     sleep 30s
   fi
@@ -164,7 +165,7 @@ prepare_custom_repo() {
   shift
   _UNLIMITED_ORGANIZATION=$1
   shift
-  # Rest of arguments are commits to cherry-pick in order
+  # Остальные аргументы - коммиты для cherry-pick в порядке применения
 
   git clone https://github.com/${_UNLIMITED_ORGANIZATION}/${_REPO}
   cd ${_REPO}
@@ -175,21 +176,21 @@ prepare_custom_repo() {
   git fetch --all --tags
   git checkout tags/${_TAG} -b ${_TAG}-custom
 
-  # Hard-code temp git user.name and user.email for this local cherry-picked commit
+  # Жестко задать временные user.name и user.email git для этого локального cherry-picked коммита
   git config user.name 'CherryPick User'
   git config user.email 'cherrypick@btacticoo.com'
 
   while [ "$#" -gt 0 ]; do
     _ncommit=$1
     if ! git cherry-pick "${_ncommit}"; then
-      echo "Error: cherry-pick of commit ${_ncommit} failed in ${_REPO}" >&2
-      echo "Aborting!"
+      echo "Ошибка: cherry-pick коммита ${_ncommit} не удался в ${_REPO}" >&2
+      echo "Прерывание!"
       exit 3
     fi
     shift
   done
 
-  # Force our changes
+  # Принудительно применить наши изменения
   git tag --delete ${_TAG}
   git tag -a "${_TAG}" -m "${_TAG}"
 
@@ -217,7 +218,7 @@ build_oo_binaries() {
     --branch ${_UPSTREAM_TAG} \
     https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
     build_tools
-  # Ignore detached head warning
+  # Игнорировать предупреждение о detached head
   cd build_tools
   mkdir ${_OUT_FOLDER}
   docker build --tag onlyoffice-document-editors-builder .
@@ -233,8 +234,8 @@ if [ "${BUILD_BINARIES}" == "true" ] ; then
   build_oo_binaries_exit_value=$?
 fi
 
-# Simulate that binaries build went ok
-# when we only want to make the deb
+# Сымитировать, что сборка бинарных файлов прошла успешно
+# когда мы хотим только собрать deb пакет
 if [ ${DEB_ONLY} == "true" ] ; then
   build_oo_binaries_exit_value=0
 fi
@@ -255,8 +256,8 @@ if [ "${BUILD_DEB}" == "true" ] ; then
       onlyoffice-deb-builder /bin/bash -c "/usr/local/unlimited-onlyoffice-package-builder/onlyoffice-deb-builder.sh --product-version ${PRODUCT_VERSION} --build-number ${BUILD_NUMBER} --tag-suffix ${TAG_SUFFIX} --unlimited-organization ${UNLIMITED_ORGANIZATION} --debian-package-suffix ${DEBIAN_PACKAGE_SUFFIX}"
     cd ..
   else
-    echo "Binaries build failed!"
-    echo "Aborting... !"
+    echo "Сборка бинарных файлов не удалась!"
+    echo "Прерывание... !"
     exit 1
   fi
 fi
