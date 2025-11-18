@@ -211,6 +211,9 @@ prepare_custom_repo() {
 
 }
 
+
+
+
 build_oo_binaries() {
 
   _OUT_FOLDER=$1 # out
@@ -222,26 +225,131 @@ build_oo_binaries() {
   _UPSTREAM_TAG="v${_PRODUCT_VERSION}.${_BUILD_NUMBER}"
   _UNLIMITED_ORGANIZATION_TAG="${_UPSTREAM_TAG}${_TAG_SUFFIX}"
 
+  echo "=== ПОДГОТОВКА: Настройка кастомных репозиториев ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "prepare_custom_repo \"server\" \"${_UPSTREAM_TAG}\" \"${_UNLIMITED_ORGANIZATION}\" ${SERVER_CUSTOM_COMMITS}"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   prepare_custom_repo "server" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${SERVER_CUSTOM_COMMITS}
+
+  echo "=== ПОДГОТОВКА: Настройка web-apps репозитория ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "prepare_custom_repo \"web-apps\" \"${_UPSTREAM_TAG}\" \"${_UNLIMITED_ORGANIZATION}\" ${WEB_APPS_CUSTOM_COMMITS}"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   prepare_custom_repo "web-apps" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${WEB_APPS_CUSTOM_COMMITS}
 
+  echo "=== ЭТАП 1: Клонирование build_tools ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "git clone --depth=1 --recursive --branch ${_UPSTREAM_TAG} \\"
+  echo "  https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \\"
+  echo "  build_tools"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   git clone \
     --depth=1 \
     --recursive \
     --branch ${_UPSTREAM_TAG} \
     https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
     build_tools
-  # В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ automate.py     - надо будет пропатчить  
-  # Игнорировать предупреждение о detached head
-  cd build_tools
-  mkdir ${_OUT_FOLDER}
-  docker build --tag onlyoffice-document-editors-builder .
-  docker run -e PRODUCT_VERSION=${_PRODUCT_VERSION} -e BUILD_NUMBER=${_BUILD_NUMBER} -e NODE_ENV='production' -v $(pwd)/${_OUT_FOLDER}:/build_tools/out -v $(pwd)/../server:/server -v $(pwd)/../web-apps:/web-apps onlyoffice-document-editors-builder /bin/bash -c '\
-    cd tools/linux && \
-    python3 ./automate.py --branch=tags/'"${_UPSTREAM_TAG}"
-  cd ..
 
+  echo "=== ЭТАП 2: Переход в build_tools и создание выходной директории ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: build_tools"
+  cd build_tools
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Создание выходной директории: ${_OUT_FOLDER}"
+  mkdir ${_OUT_FOLDER}
+  echo "Создана директория: $(pwd)/${_OUT_FOLDER}"
+  echo ""
+
+  echo "=== ЭТАП 3: Сборка Docker образа ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "docker build --tag onlyoffice-document-editors-builder ."
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  docker build --tag onlyoffice-document-editors-builder .
+
+  echo "=== ЭТАП 4: Запуск Docker контейнера для сборки ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "docker run \\"
+  echo "  -e PRODUCT_VERSION=${_PRODUCT_VERSION} \\"
+  echo "  -e BUILD_NUMBER=${_BUILD_NUMBER} \\"
+  echo "  -e NODE_ENV='production' \\"
+  echo "  -v \$(pwd)/${_OUT_FOLDER}:/build_tools/out \\"
+  echo "  -v \$(pwd)/../server:/server \\"
+  echo "  -v \$(pwd)/../web-apps:/web-apps \\"
+  echo "  onlyoffice-document-editors-builder \\"
+  echo "  /bin/bash -c 'cd tools/linux && python3 ./automate.py --branch=tags/\"${_UPSTREAM_TAG}\"'"
+  echo ""
+  
+  read -p "В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ automate.py Запустить сборку в Docker контейнере? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  docker run \
+    -e PRODUCT_VERSION=${_PRODUCT_VERSION} \
+    -e BUILD_NUMBER=${_BUILD_NUMBER} \
+    -e NODE_ENV='production' \
+    -v $(pwd)/${_OUT_FOLDER}:/build_tools/out \
+    -v $(pwd)/../server:/server \
+    -v $(pwd)/../web-apps:/web-apps \
+    onlyoffice-document-editors-builder \
+    /bin/bash -c '\
+      cd tools/linux && \
+      python3 ./automate.py --branch=tags/'"${_UPSTREAM_TAG}"
+
+  echo "=== ЭТАП 5: Возврат в исходную директорию ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Возврат на уровень выше"
+  cd ..
+  echo "Текущая директория после возврата: $(pwd)"
+  echo ""
+
+  echo "=== Сборка бинарных файлов завершена успешно! ==="
+  echo "Результаты сборки находятся в: $(pwd)/build_tools/${_OUT_FOLDER}"
+  echo "Параметры сборки:"
+  echo "  Версия продукта: ${_PRODUCT_VERSION}"
+  echo "  Номер сборки: ${_BUILD_NUMBER}"
+  echo "  Тег upstream: ${_UPSTREAM_TAG}"
+  echo "  Организация: ${_UNLIMITED_ORGANIZATION}"
+  echo "  Выходная папка: ${_OUT_FOLDER}"
 }
+
+
+
 
 if [ "${BUILD_BINARIES}" == "true" ] ; then          # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
   build_oo_binaries "out" "${PRODUCT_VERSION}" "${BUILD_NUMBER}" "${TAG_SUFFIX}" "${UNLIMITED_ORGANIZATION}"
