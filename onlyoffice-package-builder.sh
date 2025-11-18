@@ -27,6 +27,18 @@ cat <<EOF
   Использование: $0 --product-version=ВЕРСИЯ_ПРОДУКТА --build-number=НОМЕР_СБОРКИ --unlimited-organization=ОРГАНИЗАЦИЯ --tag-suffix=СУФФИКС_ТЕГА --debian-package-suffix=СУФФИКС_DEBIAN_ПАКЕТА
   Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic
 
+  Дополнительные опции:
+  --binaries-only    - собрать только бинарные файлы
+  --deb-only         - собрать только DEB пакет (предполагает, что бинарные файлы уже собраны)
+  --skip-download    - пропустить скачивание исходных кодов (предполагает, что репозитории уже скачаны)
+
+  Примеры комбинированного использования:
+  # Собрать всё, но пропустить скачивание
+  $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --skip-download
+
+  # Собрать только DEB пакет, пропуская скачивание и сборку бинарных файлов
+  $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --deb-only --skip-download
+
   Для Github actions вы можете захотеть собрать только бинарные файлы или только deb пакет, чтобы было проще очищать контейнеры
   Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --binaries-only
   Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --deb-only
@@ -50,6 +62,7 @@ EOF
 
 BINARIES_ONLY="false"
 DEB_ONLY="false"
+SKIP_DOWNLOAD="false"
 
 UPSTREAM_ORGANIZATION="ONLYOFFICE"
 
@@ -83,6 +96,9 @@ for option in "$@"; do
     ;;
     --deb-only)
       DEB_ONLY="true"
+    ;;
+    --skip-download)
+      SKIP_DOWNLOAD="true"
     ;;
   esac
 done
@@ -211,9 +227,6 @@ prepare_custom_repo() {
 
 }
 
-
-
-
 build_oo_binaries() {
 
   _OUT_FOLDER=$1 # out
@@ -225,54 +238,79 @@ build_oo_binaries() {
   _UPSTREAM_TAG="v${_PRODUCT_VERSION}.${_BUILD_NUMBER}"
   _UNLIMITED_ORGANIZATION_TAG="${_UPSTREAM_TAG}${_TAG_SUFFIX}"
 
-  echo "=== ПОДГОТОВКА: Настройка кастомных репозиториев ==="
-  echo "Текущая директория: $(pwd)"
-  echo "Будет выполнена команда:"
-  echo "prepare_custom_repo \"server\" \"${_UPSTREAM_TAG}\" \"${_UNLIMITED_ORGANIZATION}\" ${SERVER_CUSTOM_COMMITS}"
-  echo ""
-  
-  read -p "Продолжить выполнение? (y/N): " confirm
-  if [[ ! $confirm =~ ^[Yy]$ ]]; then
-    echo "Прерывание выполнения..."
-    exit 1
-  fi
-  
-  prepare_custom_repo "server" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${SERVER_CUSTOM_COMMITS}
+  if [ "${SKIP_DOWNLOAD}" == "false" ]; then
+    echo "=== ПОДГОТОВКА: Настройка кастомных репозиториев ==="
+    echo "Текущая директория: $(pwd)"
+    echo "Будет выполнена команда:"
+    echo "prepare_custom_repo \"server\" \"${_UPSTREAM_TAG}\" \"${_UNLIMITED_ORGANIZATION}\" ${SERVER_CUSTOM_COMMITS}"
+    echo ""
+    
+    read -p "Продолжить выполнение? (y/N): " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+      echo "Прерывание выполнения..."
+      exit 1
+    fi
+    
+    prepare_custom_repo "server" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${SERVER_CUSTOM_COMMITS}
 
-  echo "=== ПОДГОТОВКА: Настройка web-apps репозитория ==="
-  echo "Текущая директория: $(pwd)"
-  echo "Будет выполнена команда:"
-  echo "prepare_custom_repo \"web-apps\" \"${_UPSTREAM_TAG}\" \"${_UNLIMITED_ORGANIZATION}\" ${WEB_APPS_CUSTOM_COMMITS}"
-  echo ""
-  
-  read -p "Продолжить выполнение? (y/N): " confirm
-  if [[ ! $confirm =~ ^[Yy]$ ]]; then
-    echo "Прерывание выполнения..."
-    exit 1
-  fi
-  
-  prepare_custom_repo "web-apps" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${WEB_APPS_CUSTOM_COMMITS}
+    echo "=== ПОДГОТОВКА: Настройка web-apps репозитория ==="
+    echo "Текущая директория: $(pwd)"
+    echo "Будет выполнена команда:"
+    echo "prepare_custom_repo \"web-apps\" \"${_UPSTREAM_TAG}\" \"${_UNLIMITED_ORGANIZATION}\" ${WEB_APPS_CUSTOM_COMMITS}"
+    echo ""
+    
+    read -p "Продолжить выполнение? (y/N): " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+      echo "Прерывание выполнения..."
+      exit 1
+    fi
+    
+    prepare_custom_repo "web-apps" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${WEB_APPS_CUSTOM_COMMITS}
 
-  echo "=== ЭТАП 1: Клонирование build_tools ==="
-  echo "Текущая директория: $(pwd)"
-  echo "Будет выполнена команда:"
-  echo "git clone --depth=1 --recursive --branch ${_UPSTREAM_TAG} \\"
-  echo "  https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \\"
-  echo "  build_tools"
-  echo ""
-  
-  read -p "Продолжить выполнение? (y/N): " confirm
-  if [[ ! $confirm =~ ^[Yy]$ ]]; then
-    echo "Прерывание выполнения..."
-    exit 1
+    echo "=== ЭТАП 1: Клонирование build_tools ==="
+    echo "Текущая директория: $(pwd)"
+    echo "Будет выполнена команда:"
+    echo "git clone --depth=1 --recursive --branch ${_UPSTREAM_TAG} \\"
+    echo "  https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \\"
+    echo "  build_tools"
+    echo ""
+    
+    read -p "Продолжить выполнение? (y/N): " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+      echo "Прерывание выполнения..."
+      exit 1
+    fi
+    
+    git clone \
+      --depth=1 \
+      --recursive \
+      --branch ${_UPSTREAM_TAG} \
+      https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
+      build_tools
+  else
+    echo "=== ПРОПУСК СКАЧИВАНИЯ ==="
+    echo "Режим --skip-download: пропускаем скачивание репозиториев"
+    echo "Предполагается, что репозитории уже существуют в текущей директории:"
+    echo "  - server/"
+    echo "  - web-apps/" 
+    echo "  - build_tools/"
+    echo ""
+    
+    # Проверяем существование необходимых директорий
+    if [ ! -d "server" ] || [ ! -d "web-apps" ] || [ ! -d "build_tools" ]; then
+      echo "ОШИБКА: Не найдены необходимые репозитории!"
+      echo "В режиме --skip-download должны существовать:"
+      echo "  server/, web-apps/, build_tools/"
+      echo "Прерывание выполнения..."
+      exit 1
+    fi
+    
+    read -p "Репозитории найдены. Продолжить сборку? (y/N): " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+      echo "Прерывание выполнения..."
+      exit 1
+    fi
   fi
-  
-  git clone \
-    --depth=1 \
-    --recursive \
-    --branch ${_UPSTREAM_TAG} \
-    https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
-    build_tools
 
   echo "=== ЭТАП 2: Переход в build_tools и создание выходной директории ==="
   echo "Текущая директория: $(pwd)"
@@ -348,21 +386,207 @@ build_oo_binaries() {
   echo "  Выходная папка: ${_OUT_FOLDER}"
 }
 
+build_deb() {
 
+  build_deb_pre_pwd="$(pwd)"
+  DOCUMENT_SERVER_PACKAGE_PATH="$(pwd)/document-server-package"
 
+  _PRODUCT_VERSION=$1 # 7.4.1
+  _BUILD_NUMBER=$2 # 36
+  _TAG_SUFFIX=$3 # -btactic
+  _UNLIMITED_ORGANIZATION=$4 # btactic-oo
+  _DEBIAN_PACKAGE_SUFFIX=$5
 
-if [ "${BUILD_BINARIES}" == "true" ] ; then          # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
+  _GIT_CLONE_BRANCH="v${_PRODUCT_VERSION}.${_BUILD_NUMBER}"
+
+  # TODO: Эти требования должны быть перенесены в Dockerfile
+  # apt install build-essential m4 npm
+  # npm install -g pkg
+
+  echo "=== ЭТАП 1: Клонирование репозитория ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}"
+  echo "Целевая директория: ${DOCUMENT_SERVER_PACKAGE_PATH}"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}
+
+  echo "=== ЭТАП 2: Настройка Makefile ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: ${DOCUMENT_SERVER_PACKAGE_PATH}"
+  cd ${DOCUMENT_SERVER_PACKAGE_PATH}
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Будет добавлено в Makefile:"
+  echo "deb_dependencies: \$(DEB_DEPS)"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  cat << EOF >> Makefile
+
+deb_dependencies: \$(DEB_DEPS)
+
+EOF
+
+  echo "=== ПРОВЕРКА: Отображение изменений в Makefile ==="
+  echo "Последние 5 строк Makefile:"
+  tail -5 Makefile
+  echo ""
+  
+  read -p "Изменения применены. Продолжить? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+
+  echo "=== ЭТАП 3: Установка зависимостей через make ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "PRODUCT_VERSION=\"${_PRODUCT_VERSION}\" BUILD_NUMBER=\"${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}\" make deb_dependencies"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb_dependencies
+
+  echo "=== ЭТАП 4: Установка build-зависимостей ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: ${DOCUMENT_SERVER_PACKAGE_PATH}/deb/build"
+  cd ${DOCUMENT_SERVER_PACKAGE_PATH}/deb/build
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Будет выполнена команда:"
+  echo "apt-get -qq build-dep -y ./"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  apt-get -qq build-dep -y ./
+
+  echo "=== ЭТАП 5: Сборка DEB пакета ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: ${DOCUMENT_SERVER_PACKAGE_PATH}"
+  cd ${DOCUMENT_SERVER_PACKAGE_PATH}
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Будет выполнена команда:"
+  echo "PRODUCT_VERSION=\"${_PRODUCT_VERSION}\" BUILD_NUMBER=\"${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}\" make deb"
+  echo ""
+  
+  read -p "Начать финальную сборку DEB пакета? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb
+
+  echo "=== ЭТАП 6: Возврат в исходную директорию ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Возврат в исходную директорию: ${build_deb_pre_pwd}"
+  cd ${build_deb_pre_pwd}
+  echo "Текущая директория после возврата: $(pwd)"
+  echo ""
+
+  echo "=== Сборка завершена успешно! ==="
+  echo "DEB пакет должен быть создан в директории: ${DOCUMENT_SERVER_PACKAGE_PATH}"
+  echo "Параметры сборки:"
+  echo "  Версия продукта: ${_PRODUCT_VERSION}"
+  echo "  Номер сборки: ${_BUILD_NUMBER}"
+  echo "  Суффикс пакета: ${_DEBIAN_PACKAGE_SUFFIX}"
+  echo "  Полная версия: ${_PRODUCT_VERSION}.${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}"
+}
+
+# Основной процесс сборки
+echo "=== НАЧАЛО ПРОЦЕССА СБОРКИ ==="
+echo "Параметры сборки:"
+echo "  Версия продукта: ${PRODUCT_VERSION}"
+echo "  Номер сборки: ${BUILD_NUMBER}"
+echo "  Организация: ${UNLIMITED_ORGANIZATION}"
+echo "  Суффикс тега: ${TAG_SUFFIX}"
+echo "  Суффикс DEB пакета: ${DEBIAN_PACKAGE_SUFFIX}"
+echo "  Режим только бинарные: ${BINARIES_ONLY}"
+echo "  Режим только DEB: ${DEB_ONLY}"
+echo "  Пропуск скачивания: ${SKIP_DOWNLOAD}"
+echo ""
+
+if [ "${BUILD_BINARIES}" == "true" ] ; then
+  echo "=== НАЧАЛО СБОРКИ БИНАРНЫХ ФАЙЛОВ ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена функция: build_oo_binaries"
+  echo "Параметры:"
+  echo "  Выходная папка: out"
+  echo "  Версия продукта: ${PRODUCT_VERSION}"
+  echo "  Номер сборки: ${BUILD_NUMBER}"
+  echo "  Суффикс тега: ${TAG_SUFFIX}"
+  echo "  Организация: ${UNLIMITED_ORGANIZATION}"
+  echo ""
+  
+  read -p "Начать сборку бинарных файлов? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   build_oo_binaries "out" "${PRODUCT_VERSION}" "${BUILD_NUMBER}" "${TAG_SUFFIX}" "${UNLIMITED_ORGANIZATION}"
   build_oo_binaries_exit_value=$?
 fi
 
 # Сымитировать, что сборка бинарных файлов прошла успешно
 # когда мы хотим только собрать deb пакет
-if [ ${DEB_ONLY} == "true" ] ; then  
-  build_oo_binaries_exit_value=0                      # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
+if [ ${DEB_ONLY} == "true" ] ; then
+  echo "=== РЕЖИМ ТОЛЬКО DEB ПАКЕТ ==="
+  echo "Пропускаем сборку бинарных файлов, используем существующие"
+  echo ""
+  
+  read -p "Продолжить с сборкой DEB пакета? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  build_oo_binaries_exit_value=0
 fi
 
-if [ "${BUILD_DEB}" == "true" ] ; then                # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
+if [ "${BUILD_DEB}" == "true" ] ; then
+  echo "=== НАЧАЛО СБОРКИ DEB ПАКЕТА ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнено:"
+  echo "  cd deb_build"
+  echo "  docker build --tag onlyoffice-deb-builder . -f Dockerfile-manual-debian-11"
+  echo "  docker run с монтированием:"
+  echo "    - deb_build → /usr/local/unlimited-onlyoffice-package-builder (ro)"
+  echo "    - deb_build → /root (rw)"
+  echo "    - ../build_tools → /root/build_tools (ro)"
+  echo "  Внутри контейнера: onlyoffice-deb-builder.sh"
+  echo ""
+  
+  read -p "Начать сборку DEB пакета? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   if [ ${build_oo_binaries_exit_value} -eq 0 ] ; then
     cd deb_build
     docker build --tag onlyoffice-deb-builder . -f Dockerfile-manual-debian-11
@@ -375,7 +599,6 @@ if [ "${BUILD_DEB}" == "true" ] ; then                # ДОБАВИТЬ ОПИ�
       -v $(pwd):/usr/local/unlimited-onlyoffice-package-builder:ro \
       -v $(pwd):/root:rw \
       -v $(pwd)/../build_tools:/root/build_tools:ro \
-      # МОДИФИЦИРОВАТЬ ЭТОТ СКРИПТ, ДОБАВИТЬ БОЛЬШЕ ОТЛАДКИ
       onlyoffice-deb-builder /bin/bash -c "/usr/local/unlimited-onlyoffice-package-builder/onlyoffice-deb-builder.sh --product-version ${PRODUCT_VERSION} --build-number ${BUILD_NUMBER} --tag-suffix ${TAG_SUFFIX} --unlimited-organization ${UNLIMITED_ORGANIZATION} --debian-package-suffix ${DEBIAN_PACKAGE_SUFFIX}" \
       2>&1 | ts '[%Y-%m-%d %H:%M:%S]' | tee build_with_timestamps.log
     cd ..
@@ -385,3 +608,5 @@ if [ "${BUILD_DEB}" == "true" ] ; then                # ДОБАВИТЬ ОПИ�
     exit 1
   fi
 fi
+
+echo "=== ВСЕ ЭТАПЫ СБОРКИ ЗАВЕРШЕНЫ УСПЕШНО! ==="
