@@ -242,18 +242,18 @@ build_oo_binaries() {
 
 }
 
-if [ "${BUILD_BINARIES}" == "true" ] ; then
+if [ "${BUILD_BINARIES}" == "true" ] ; then          # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
   build_oo_binaries "out" "${PRODUCT_VERSION}" "${BUILD_NUMBER}" "${TAG_SUFFIX}" "${UNLIMITED_ORGANIZATION}"
   build_oo_binaries_exit_value=$?
 fi
 
 # Сымитировать, что сборка бинарных файлов прошла успешно
 # когда мы хотим только собрать deb пакет
-if [ ${DEB_ONLY} == "true" ] ; then
-  build_oo_binaries_exit_value=0
+if [ ${DEB_ONLY} == "true" ] ; then  
+  build_oo_binaries_exit_value=0                      # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
 fi
 
-if [ "${BUILD_DEB}" == "true" ] ; then
+if [ "${BUILD_DEB}" == "true" ] ; then                # ДОБАВИТЬ ОПИСАНИЕ И ОЖИДАНИЕ ПОДТВЕРЖДЕНИЯ
   if [ ${build_oo_binaries_exit_value} -eq 0 ] ; then
     cd deb_build
     docker build --tag onlyoffice-deb-builder . -f Dockerfile-manual-debian-11
