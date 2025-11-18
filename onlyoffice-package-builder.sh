@@ -40,7 +40,7 @@ script -q -c \
     --tag-suffix=-btactic \
     --debian-package-suffix=-btactic \
     -binaries-only \
-    2>&1 | ts '[%Y-%m-%d %H:%M:%S]' | tee build_with_timestamps.log" \
+    2>&1 | ts '[%Y-%m-%d %H:%M:%S]' | tee build_with_timestamps_.log" \
   build_session.log
 
 
