@@ -51,13 +51,13 @@ for option in "$@"; do
       exit 0
     ;;
     --product-version=*)
-      PRODUCT_VERSION=`echo "$option" | sed 's/--product-version=//'`
+      PRODUCT_VERSION=`echo "$option" | sed 's/--product-version=//'`                 #!!!!!!!!!!!! --product-version=9.0.4
     ;;
     --build-number=*)
       BUILD_NUMBER=`echo "$option" | sed 's/--build-number=//'`
     ;;
     --unlimited-organization=*)
-      UNLIMITED_ORGANIZATION=`echo "$option" | sed 's/--unlimited-organization=//'`
+      UNLIMITED_ORGANIZATION=`echo "$option" | sed 's/--unlimited-organization=//'`   #!!!!!!!!!!!  btactic-oo  artrades
     ;;
     --tag-suffix=*)
       TAG_SUFFIX=`echo "$option" | sed 's/--tag-suffix=//'`
