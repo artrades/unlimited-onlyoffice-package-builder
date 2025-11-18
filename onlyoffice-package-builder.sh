@@ -231,6 +231,7 @@ build_oo_binaries() {
     --branch ${_UPSTREAM_TAG} \
     https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
     build_tools
+  # В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ automate.py     - надо будет пропатчить  
   # Игнорировать предупреждение о detached head
   cd build_tools
   mkdir ${_OUT_FOLDER}
