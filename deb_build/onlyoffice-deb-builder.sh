@@ -121,6 +121,20 @@ build_deb() {
   # apt install build-essential m4 npm
   # npm install -g pkg
 
+
+  # Выводим информацию о команде git clone
+  echo "Будет выполнена команда:"
+  echo "git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}"
+  echo ""
+  
+  # Запрос подтверждения
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+
   git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}
   # Игнорировать предупреждения DETACHED
   # Обходной путь для установки зависимостей - НАЧАЛО
