@@ -31,6 +31,19 @@ cat <<EOF
   Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --binaries-only
   Пример: $0 --product-version=7.4.1 --build-number=36 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic --deb-only
 
+# Записывает и сессию и вывод с временными метками
+script -q -c \
+  "sudo ./onlyoffice-package-builder.sh \
+    --product-version=9.0.4 \
+    --build-number=52 \
+    --unlimited-organization=btactic-oo \
+    --tag-suffix=-btactic \
+    --debian-package-suffix=-btactic \
+    -binaries-only \
+    2>&1 | ts '[%Y-%m-%d %H:%M:%S]' | tee build_with_timestamps.log" \
+  build_session.log
+
+
 EOF
 
 }
