@@ -121,41 +121,118 @@ build_deb() {
   # apt install build-essential m4 npm
   # npm install -g pkg
 
-
-  # Выводим информацию о команде git clone
+  echo "=== ЭТАП 1: Клонирование репозитория ==="
+  echo "Текущая директория: $(pwd)"
   echo "Будет выполнена команда:"
   echo "git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}"
+  echo "Целевая директория: ${DOCUMENT_SERVER_PACKAGE_PATH}"
   echo ""
   
-  # Запрос подтверждения
   read -p "Продолжить выполнение? (y/N): " confirm
   if [[ ! $confirm =~ ^[Yy]$ ]]; then
     echo "Прерывание выполнения..."
     exit 1
   fi
   
-
   git clone https://github.com/ONLYOFFICE/document-server-package.git -b ${_GIT_CLONE_BRANCH}
-  # Игнорировать предупреждения DETACHED
-  # Обходной путь для установки зависимостей - НАЧАЛО
-  cd ${DOCUMENT_SERVER_PACKAGE_PATH}
 
+  echo "=== ЭТАП 2: Настройка Makefile ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: ${DOCUMENT_SERVER_PACKAGE_PATH}"
+  cd ${DOCUMENT_SERVER_PACKAGE_PATH}
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Будет добавлено в Makefile:"
+  echo "deb_dependencies: \$(DEB_DEPS)"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   cat << EOF >> Makefile
 
 deb_dependencies: \$(DEB_DEPS)
 
 EOF
 
-  PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb_dependencies
-  cd ${DOCUMENT_SERVER_PACKAGE_PATH}/deb/build
-  apt-get -qq build-dep -y ./
-  # Обходной путь для установки зависимостей - КОНЕЦ
+  echo "=== ПРОВЕРКА: Отображение изменений в Makefile ==="
+  echo "Последние 5 строк Makefile:"
+  tail -5 Makefile
+  echo ""
+  
+  read -p "Изменения применены. Продолжить? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
 
+  echo "=== ЭТАП 3: Установка зависимостей через make ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Будет выполнена команда:"
+  echo "PRODUCT_VERSION=\"${_PRODUCT_VERSION}\" BUILD_NUMBER=\"${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}\" make deb_dependencies"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb_dependencies
+
+  echo "=== ЭТАП 4: Установка build-зависимостей ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: ${DOCUMENT_SERVER_PACKAGE_PATH}/deb/build"
+  cd ${DOCUMENT_SERVER_PACKAGE_PATH}/deb/build
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Будет выполнена команда:"
+  echo "apt-get -qq build-dep -y ./"
+  echo ""
+  
+  read -p "Продолжить выполнение? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
+  apt-get -qq build-dep -y ./
+
+  echo "=== ЭТАП 5: Сборка DEB пакета ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Переход в: ${DOCUMENT_SERVER_PACKAGE_PATH}"
   cd ${DOCUMENT_SERVER_PACKAGE_PATH}
+  echo "Текущая директория после перехода: $(pwd)"
+  
+  echo "Будет выполнена команда:"
+  echo "PRODUCT_VERSION=\"${_PRODUCT_VERSION}\" BUILD_NUMBER=\"${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}\" make deb"
+  echo ""
+  
+  read -p "Начать финальную сборку DEB пакета? (y/N): " confirm
+  if [[ ! $confirm =~ ^[Yy]$ ]]; then
+    echo "Прерывание выполнения..."
+    exit 1
+  fi
+  
   PRODUCT_VERSION="${_PRODUCT_VERSION}" BUILD_NUMBER="${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}" make deb
 
+  echo "=== ЭТАП 6: Возврат в исходную директорию ==="
+  echo "Текущая директория: $(pwd)"
+  echo "Возврат в исходную директорию: ${build_deb_pre_pwd}"
   cd ${build_deb_pre_pwd}
+  echo "Текущая директория после возврата: $(pwd)"
+  echo ""
 
+  echo "=== Сборка завершена успешно! ==="
+  echo "DEB пакет должен быть создан в директории: ${DOCUMENT_SERVER_PACKAGE_PATH}"
+  echo "Параметры сборки:"
+  echo "  Версия продукта: ${_PRODUCT_VERSION}"
+  echo "  Номер сборки: ${_BUILD_NUMBER}"
+  echo "  Суффикс пакета: ${_DEBIAN_PACKAGE_SUFFIX}"
+  echo "  Полная версия: ${_PRODUCT_VERSION}.${_BUILD_NUMBER}${_DEBIAN_PACKAGE_SUFFIX}"
 }
 
 build_deb "${PRODUCT_VERSION}" "${BUILD_NUMBER}" "${TAG_SUFFIX}" "${UNLIMITED_ORGANIZATION}" "${DEBIAN_PACKAGE_SUFFIX}"
