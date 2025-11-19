@@ -358,8 +358,10 @@ build_oo_binaries() {
   echo "  onlyoffice-document-editors-builder \\"
   echo "  /bin/bash -c 'cd tools/linux && python3 ./automate.py --branch=tags/\"${_UPSTREAM_TAG}\"'"
   echo ""
+
+  # ПЕРЕД ЭТИМ ОТВЕТОМ НУЖНО ВСЕ ПАТЧИТЬ
   
-  read -p "В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ automate.py Запустить сборку в Docker контейнере? (y/N): " confirm
+  read -p "В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ automate.py make.py .Запустить сборку в Docker контейнере? (y/N): " confirm
   if [[ ! $confirm =~ ^[Yy]$ ]]; then
     echo "Прерывание выполнения..."
     exit 1
