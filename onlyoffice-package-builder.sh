@@ -359,7 +359,7 @@ build_oo_binaries() {
   echo "  /bin/bash -c 'cd tools/linux && python3 ./automate.py --branch=tags/\"${_UPSTREAM_TAG}\"'"
   echo ""
 
-  # ПЕРЕД ЭТИМ ОТВЕТОМ НУЖНО ВСЕ ПАТЧИТЬ
+  # ПЕРЕД ЭТИМ ОТВЕТОМ НУЖНО ВСЕ ПАТЧИТЬ - ОСТАВИТЬ ТОЛЬКО ЭТОТ ЗАПРОС
   
   read -p "В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ: ИСХОДНИКИ/automate.py/make.py .Запустить сборку в Docker контейнере? (y/N): " confirm
   if [[ ! $confirm =~ ^[Yy]$ ]]; then
