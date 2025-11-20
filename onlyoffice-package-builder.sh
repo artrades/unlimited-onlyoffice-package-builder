@@ -214,7 +214,6 @@ build_oo_binaries() {
   git clone \
     --depth=1 \
     --recursive \
-    --branch ${_UPSTREAM_TAG} \  
     https://github.com/artrades/build_tools.git \
     build_tools
   # Ignore detached head warning
