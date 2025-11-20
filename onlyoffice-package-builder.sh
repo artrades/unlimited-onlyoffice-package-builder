@@ -225,7 +225,7 @@ build_oo_binaries() {
   read -p "В ЭТОТ МОМЕНТ МОЖНО ПАТЧИТЬ: ИСХОДНИКИ/automate.py/make.py .Запустить сборку в Docker контейнере? (y/N): " confirm
   if [[ ! $confirm =~ ^[Yy]$ ]]; then
     echo "Прерывание выполнения..."  # ЭТОТ ВЫХОД МОЖНО И ЗАКОММЕНТИРОВАТЬ, МНЕ ЖЕ НЕ НУЖЕН ОТРИЦАТЕЛЬНЫЙ ОТВЕТ, А ПАУЗА ПЕРЕД ПРОДОЛЖЕНИЕМ
-    exit 1 # ЭТОТ ВЫХОД МОЖНО И ЗАКОММЕНТИРОВАТЬ, МНЕ ЖЕ НЕ НУЖЕН ОТРИЦАТЕЛЬНЫЙ ОТВЕТ, А ПАУЗА ПЕРЕД ПРОДОЛЖЕНИЕМ
+    #exit 1  ЭТОТ ВЫХОД МОЖНО И ЗАКОММЕНТИРОВАТЬ, МНЕ ЖЕ НЕ НУЖЕН ОТРИЦАТЕЛЬНЫЙ ОТВЕТ, А ПАУЗА ПЕРЕД ПРОДОЛЖЕНИЕМ
   fi
 
   docker run -e PRODUCT_VERSION=${_PRODUCT_VERSION} -e BUILD_NUMBER=${_BUILD_NUMBER} -e NODE_ENV='production' -v $(pwd)/${_OUT_FOLDER}:/build_tools/out -v $(pwd)/../server:/server -v $(pwd)/../web-apps:/web-apps onlyoffice-document-editors-builder /bin/bash -c '\
