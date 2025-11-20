@@ -215,7 +215,8 @@ build_oo_binaries() {
     --depth=1 \
     --recursive \
     --branch ${_UPSTREAM_TAG} \
-    https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
+    #https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
+    https://github.com/artrades/build_tools.git \
     build_tools
   # Ignore detached head warning
   cd build_tools
