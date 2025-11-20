@@ -210,15 +210,15 @@ build_oo_binaries() {
 
   prepare_custom_repo "server" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${SERVER_CUSTOM_COMMITS}
   prepare_custom_repo "web-apps" "${_UPSTREAM_TAG}" "${_UNLIMITED_ORGANIZATION}" ${WEB_APPS_CUSTOM_COMMITS}
-
+ 
   git clone \
     --depth=1 \
     --recursive \
-    --branch ${_UPSTREAM_TAG} \
-    #https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
+    --branch ${_UPSTREAM_TAG} \  
     https://github.com/artrades/build_tools.git \
     build_tools
   # Ignore detached head warning
+  # https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
   cd build_tools
   mkdir ${_OUT_FOLDER}
   docker build --tag onlyoffice-document-editors-builder .
