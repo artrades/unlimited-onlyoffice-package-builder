@@ -247,6 +247,7 @@ build_oo_binaries() {
     echo 'И НАЖМИТЕ ENTER ЗДЕСЬ для продолжения...' && \
     read -r && \
     python3 ./automate.py --branch=tags/${_UPSTREAM_TAG}"
+  cd ..  
 
 }
 
