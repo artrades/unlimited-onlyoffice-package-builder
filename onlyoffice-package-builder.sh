@@ -235,19 +235,18 @@ build_oo_binaries() {
   -v $(pwd)/${_OUT_FOLDER}:/build_tools/out \
   -v $(pwd)/../server:/server \
   -v $(pwd)/../web-apps:/web-apps \
-  onlyoffice-document-editors-builder /bin/bash -c '\
-    cd tools/linux && \
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" && \
-    echo "ПАУЗА ДЛЯ ПАТЧИНГА" && \
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" && \
-    echo "" && \
-    echo "В ДРУГОМ ТЕРМИНАЛЕ выполните:" && \
-    echo "docker exec -it '$(hostname)' bash" && \
-    echo "" && \
-    echo "Затем отредактируйте: nano /build_tools/tools/linux/automate.py" && \
-    echo "И НАЖМИТЕ ENTER ЗДЕСЬ для продолжения..." && \
+  onlyoffice-document-editors-builder /bin/bash -c "cd tools/linux && \
+    echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' && \
+    echo 'ПАУЗА ДЛЯ ПАТЧИНГА' && \
+    echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' && \
+    echo '' && \
+    echo 'В ДРУГОМ ТЕРМИНАЛЕ выполните:' && \
+    echo 'docker exec -it '$(hostname)' bash' && \
+    echo '' && \
+    echo 'Затем отредактируйте: nano /build_tools/tools/linux/automate.py' && \
+    echo 'И НАЖМИТЕ ENTER ЗДЕСЬ для продолжения...' && \
     read -r && \
-    python3 ./automate.py --branch=tags/'"${_UPSTREAM_TAG}"'"
+    python3 ./automate.py --branch=tags/${_UPSTREAM_TAG}"
 
 }
 
