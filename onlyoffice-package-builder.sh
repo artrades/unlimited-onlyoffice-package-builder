@@ -214,10 +214,10 @@ build_oo_binaries() {
   git clone \
     --depth=1 \
     --recursive \
-    https://github.com/artrades/build_tools.git \
+    --branch ${_UPSTREAM_TAG} \
+    https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
     build_tools
   # Ignore detached head warning
-  # https://github.com/${UPSTREAM_ORGANIZATION}/build_tools.git \
   cd build_tools
   mkdir ${_OUT_FOLDER}
   docker build --tag onlyoffice-document-editors-builder .
