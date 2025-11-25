@@ -17,6 +17,11 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# sudo ./onlyoffice-package-builder.sh --product-version=9.0.4 --build-number=52 --unlimited-organization=btactic-oo --tag-suffix=-btactic --debian-package-suffix=-btactic 2>&1 | tee build-log.txt
+
+
 #######################################################################
 
 usage() {
