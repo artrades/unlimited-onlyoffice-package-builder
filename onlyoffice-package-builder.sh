@@ -1,6 +1,9 @@
 #!/bin/bash
 
 #######################################################################
+#
+#  БЛА БЛА БЛА 
+
 # OnlyOffice Package Builder
 
 # Copyright (C) 2024 BTACTIC, SCCL
